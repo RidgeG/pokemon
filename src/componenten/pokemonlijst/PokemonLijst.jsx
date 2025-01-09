@@ -23,9 +23,49 @@ const PokemonCard = ({ name, image, abilities, weight, movesCount }) => {
         const fetchPokemonList = async () => {
             try {
                 setLoading(true);
-                const { data } = await axios.get ("https://pokeapi.co/api/v2/pokemon?limit=20");
-            };
+                const {data} = await axios.get("https://pokeapi.co/api/v2/pokemon?limit=20");
 
-        }
-    })
-}
+                const pokemonDetails = await Promise.all(
+                    data.results.map(async (pokemon) => {
+                        const {data: details} = await axios.get(pokemon.url);
+                        return {
+                            name: details.name,
+                            image: details.sprites.front_default,
+                            abilities: details.abilities.map((ability) => ability.ability.name),
+                            weight: details.weight,
+                            movesCount: details.moves.length,
+                        };
+                    })
+                );
+                setPokemonList(pokemonDetails);
+            } catch (error) {
+                console.error("Error fetching pokemon list", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchPokemonList();
+    }, []);
+
+    if (loading) {
+        return <p>Loading...</p>;
+    }
+
+        return (
+            <div className="pokemon-container">
+                {pokemonList.map((pokemon, index) => (
+                    <PokemonCard
+                        key={index}
+                        name={pokemon.name}
+                        image={pokemon.image}
+                        abilities={pokemon.abilities}
+                        weight={pokemon.weight}
+                        movesCount={pokemon.movesCount}
+                    />
+                ))}
+            </div>
+        );
+
+};
+    export default PokemonLijst;
